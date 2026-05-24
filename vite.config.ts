@@ -4,6 +4,12 @@ import { defineConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 
 export default defineConfig({
+  server: {
+    allowedHosts: ["lawn-frame.server.kitze.io", "frame.server.kitze.io"],
+  },
+  preview: {
+    allowedHosts: ["lawn-frame.server.kitze.io", "frame.server.kitze.io"],
+  },
   plugins: [
     tsconfigPaths({
       projects: ["./tsconfig.json"],
