@@ -1,6 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { UserButton } from "@clerk/tanstack-react-start";
-import { Moon, Sun } from "lucide-react";
+import { Moon, Sun, User } from "lucide-react";
 import { useTheme } from "@/components/theme/ThemeToggle";
 import React from "react";
 import { useConvex } from "convex/react";
@@ -85,23 +84,13 @@ export function DashboardHeader({
       {/* User controls — pinned top-right */}
       <div className="row-start-1 col-start-2 sm:col-start-3 flex items-center gap-4 pl-4 border-l-2 border-[#1a1a1a]/10 h-8">
         <ThemeToggleButton />
-        <UserButton
-          appearance={{
-            variables: {
-              colorText: "#1a1a1a",
-              colorTextSecondary: "#888",
-              colorBackground: "#f0f0e8",
-            },
-            elements: {
-              avatarBox: "w-8 h-8 rounded-none border-2 border-[#1a1a1a]",
-              userButtonPopoverCard: "bg-[#f0f0e8] border-2 border-[#1a1a1a] rounded-none shadow-[8px_8px_0px_0px_var(--shadow-color)]",
-              userButtonPopoverActionButton: "!text-[#1a1a1a] hover:!bg-[#e8e8e0] rounded-none",
-              userButtonPopoverActionButtonText: "!text-[#1a1a1a] hover:!text-[#1a1a1a] font-mono font-bold",
-              userButtonPopoverActionButtonIcon: "!text-[#1a1a1a] hover:!text-[#1a1a1a]",
-              userButtonPopoverFooter: "hidden",
-            },
-          }}
-        />
+        <div
+          className="w-8 h-8 border-2 border-[#1a1a1a] flex items-center justify-center bg-[#e8e8e0]"
+          title="Kitze"
+          aria-label="Kitze"
+        >
+          <User className="h-4 w-4 text-[#1a1a1a]" />
+        </div>
       </div>
 
       {/* Children — second row on mobile, middle column on desktop */}

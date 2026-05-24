@@ -33,6 +33,10 @@ function formatTeamPlanLabel(
   billingStatus?: string,
   stripeSubscriptionId?: string,
 ) {
+  if (billingStatus === "not_subscribed") {
+    return plan === "pro" || plan === "team" ? "Pro" : "Basic";
+  }
+
   if (!stripeSubscriptionId && billingStatus !== "active") {
     return "Unpaid";
   }

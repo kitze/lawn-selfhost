@@ -32,6 +32,8 @@ export function getS3Client(): S3Client {
   return new S3Client({
     region: process.env.RAILWAY_REGION || "us-east-1",
     endpoint: process.env.RAILWAY_ENDPOINT,
+    requestChecksumCalculation: "WHEN_REQUIRED",
+    responseChecksumValidation: "WHEN_REQUIRED",
     credentials: {
       accessKeyId,
       secretAccessKey,

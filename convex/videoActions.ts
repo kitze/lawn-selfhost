@@ -11,13 +11,6 @@ import { v } from "convex/values";
 import { action, ActionCtx } from "./_generated/server";
 import { api, internal } from "./_generated/api";
 import { Id } from "./_generated/dataModel";
-import {
-  buildMuxPlaybackUrl,
-  buildMuxThumbnailUrl,
-  createMuxAssetFromInputUrl,
-  createPublicPlaybackId,
-  getMuxAsset,
-} from "./mux";
 import { BUCKET_NAME, getS3Client } from "./s3";
 
 const GIBIBYTE = 1024 ** 3;
@@ -189,48 +182,17 @@ async function requireVideoMemberAccess(
   }
 }
 
-function buildPublicPlaybackSession(
-  playbackId: string,
-): { url: string; posterUrl: string } {
+async function buildOriginalPlaybackSession(
+  key: string,
+  contentType?: string,
+): Promise<{ url: string; posterUrl: string }> {
   return {
-    url: buildMuxPlaybackUrl(playbackId),
-    posterUrl: buildMuxThumbnailUrl(playbackId),
+    url: await buildSignedBucketObjectUrl(key, {
+      expiresIn: 60 * 60 * 6,
+      contentType: contentType ?? "video/mp4",
+    }),
+    posterUrl: "",
   };
-}
-
-async function ensurePublicPlaybackId(
-  ctx: ActionCtx,
-  params: {
-    videoId?: Id<"videos">;
-    muxAssetId?: string | null;
-    muxPlaybackId: string;
-  },
-): Promise<string> {
-  const { videoId, muxAssetId, muxPlaybackId } = params;
-  if (!muxAssetId) return muxPlaybackId;
-
-  const asset = await getMuxAsset(muxAssetId);
-  const playbackIds = (asset.playback_ids ?? []) as Array<{
-    id?: string;
-    policy?: string;
-  }>;
-
-  let publicPlaybackId = playbackIds.find((entry) => entry.policy === "public" && entry.id)?.id;
-  if (!publicPlaybackId) {
-    const created = await createPublicPlaybackId(muxAssetId);
-    publicPlaybackId = created.id;
-  }
-
-  const resolvedPlaybackId = publicPlaybackId ?? muxPlaybackId;
-  if (videoId && resolvedPlaybackId !== muxPlaybackId) {
-    await ctx.runMutation(internal.videos.setMuxPlaybackId, {
-      videoId,
-      muxPlaybackId: resolvedPlaybackId,
-      thumbnailUrl: buildMuxThumbnailUrl(resolvedPlaybackId),
-    });
-  }
-
-  return resolvedPlaybackId;
 }
 
 export const getUploadUrl = action({
@@ -324,20 +286,11 @@ export const markUploadComplete = action({
         contentType: normalizedContentType,
       });
 
-      await ctx.runMutation(internal.videos.markAsProcessing, {
+      await ctx.runMutation(internal.videos.markAsReady, {
         videoId: args.videoId,
+        muxAssetId: "selfhost-original",
+        muxPlaybackId: video.s3Key,
       });
-
-      const ingestUrl = await buildSignedBucketObjectUrl(video.s3Key, {
-        expiresIn: 60 * 60 * 24,
-      });
-      const asset = await createMuxAssetFromInputUrl(args.videoId, ingestUrl);
-      if (asset.id) {
-        await ctx.runMutation(internal.videos.setMuxAssetReference, {
-          videoId: args.videoId,
-          muxAssetId: asset.id,
-        });
-      }
     } catch (error) {
       const shouldDeleteObject = shouldDeleteUploadedObjectOnFailure(error);
       if (shouldDeleteObject) {
@@ -357,7 +310,7 @@ export const markUploadComplete = action({
       const uploadError =
         shouldDeleteObject && error instanceof Error
           ? error.message
-          : "Mux ingest failed after upload.";
+          : "Original video validation failed after upload.";
       await ctx.runMutation(internal.videos.markAsFailed, {
         videoId: args.videoId,
         uploadError,
@@ -381,7 +334,7 @@ export const markUploadFailed = action({
 
     await ctx.runMutation(internal.videos.markAsFailed, {
       videoId: args.videoId,
-      uploadError: "Upload failed before Mux could process the asset.",
+      uploadError: "Upload failed before the original video could be saved.",
     });
 
     return { success: true };
@@ -402,16 +355,11 @@ export const getPlaybackSession = action({
       videoId: args.videoId,
     });
 
-    if (!video || !video.muxPlaybackId || video.status !== "ready") {
+    if (!video || !video.s3Key || video.status !== "ready") {
       throw new Error("Video not found or not ready");
     }
 
-    const playbackId = await ensurePublicPlaybackId(ctx, {
-      videoId: args.videoId,
-      muxAssetId: video.muxAssetId,
-      muxPlaybackId: video.muxPlaybackId,
-    });
-    return buildPublicPlaybackSession(playbackId);
+    return await buildOriginalPlaybackSession(video.s3Key, video.contentType);
   },
 });
 
@@ -425,16 +373,11 @@ export const getPlaybackUrl = action({
       videoId: args.videoId,
     });
 
-    if (!video || !video.muxPlaybackId || video.status !== "ready") {
+    if (!video || !video.s3Key || video.status !== "ready") {
       throw new Error("Video not found or not ready");
     }
 
-    const playbackId = await ensurePublicPlaybackId(ctx, {
-      videoId: args.videoId,
-      muxAssetId: video.muxAssetId,
-      muxPlaybackId: video.muxPlaybackId,
-    });
-    const session = buildPublicPlaybackSession(playbackId);
+    const session = await buildOriginalPlaybackSession(video.s3Key, video.contentType);
     return { url: session.url };
   },
 });
@@ -479,16 +422,14 @@ export const getPublicPlaybackSession = action({
       publicId: args.publicId,
     });
 
-    if (!result?.video?.muxPlaybackId) {
+    if (!result?.video?.s3Key) {
       throw new Error("Video not found or not ready");
     }
 
-    const playbackId = await ensurePublicPlaybackId(ctx, {
-      videoId: result.video._id,
-      muxAssetId: result.video.muxAssetId,
-      muxPlaybackId: result.video.muxPlaybackId,
-    });
-    return buildPublicPlaybackSession(playbackId);
+    return await buildOriginalPlaybackSession(
+      result.video.s3Key,
+      result.video.contentType,
+    );
   },
 });
 
@@ -506,16 +447,14 @@ export const getSharedPlaybackSession = action({
       grantToken: args.grantToken,
     });
 
-    if (!result?.video?.muxPlaybackId) {
+    if (!result?.video?.s3Key) {
       throw new Error("Video not found or not ready");
     }
 
-    const playbackId = await ensurePublicPlaybackId(ctx, {
-      videoId: result.video._id,
-      muxAssetId: result.video.muxAssetId,
-      muxPlaybackId: result.video.muxPlaybackId,
-    });
-    return buildPublicPlaybackSession(playbackId);
+    return await buildOriginalPlaybackSession(
+      result.video.s3Key,
+      result.video.contentType,
+    );
   },
 });
 

@@ -82,7 +82,7 @@ export default function VideoPage() {
   const [isLoadingOriginalPlayback, setIsLoadingOriginalPlayback] = useState(false);
   const [preferredSource, setPreferredSource] = useState<"mux720" | "original">("original");
   const playerRef = useRef<VideoPlayerHandle | null>(null);
-  const isPlayable = video?.status === "ready" && Boolean(video?.muxPlaybackId);
+  const isPlayable = video?.status === "ready" && Boolean(video?.s3Key);
   const playbackUrl = playbackSession?.url ?? null;
   const activePlaybackUrl =
     preferredSource === "mux720"
@@ -143,7 +143,7 @@ export default function VideoPage() {
     return () => {
       cancelled = true;
     };
-  }, [getPlaybackSession, isPlayable, resolvedVideoId, video?.muxPlaybackId]);
+  }, [getPlaybackSession, isPlayable, resolvedVideoId, video?.s3Key]);
 
   useEffect(() => {
     if (!resolvedVideoId || !video || video.status === "uploading" || video.status === "failed") {

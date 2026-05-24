@@ -1,7 +1,6 @@
 import { useAction, useMutation } from "convex/react";
 import { api } from "@convex/_generated/api";
 import { Link, useParams } from "@tanstack/react-router";
-import { useUser } from "@clerk/tanstack-react-start";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { VideoPlayer, type VideoPlayerHandle } from "@/components/video-player/VideoPlayer";
 import { Button } from "@/components/ui/button";
@@ -15,7 +14,8 @@ import { useWatchData } from "./-watch.data";
 export default function WatchPage() {
   const params = useParams({ strict: false });
   const publicId = params.publicId as string;
-  const { user, isLoaded: isUserLoaded } = useUser();
+  const user = { id: "selfhost-user" };
+  const isUserLoaded = true;
 
   const createComment = useMutation(api.comments.createForPublic);
   const getPlaybackSession = useAction(api.videoActions.getPublicPlaybackSession);
@@ -38,7 +38,7 @@ export default function WatchPage() {
   const playerRef = useRef<VideoPlayerHandle | null>(null);
 
   useEffect(() => {
-    if (!videoData?.video?.muxPlaybackId) {
+    if (!videoData?.video?.s3Key) {
       setPlaybackSession(null);
       return;
     }
@@ -64,7 +64,7 @@ export default function WatchPage() {
     return () => {
       cancelled = true;
     };
-  }, [getPlaybackSession, publicId, videoData?.video?.muxPlaybackId]);
+  }, [getPlaybackSession, publicId, videoData?.video?.s3Key]);
 
   useEffect(() => {
     setIsDownloading(false);

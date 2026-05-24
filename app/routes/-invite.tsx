@@ -3,7 +3,6 @@ import { useMutation } from "convex/react";
 import { api } from "@convex/_generated/api";
 import { Link, useNavigate, useParams } from "@tanstack/react-router";
 import { useState } from "react";
-import { useUser } from "@clerk/tanstack-react-start";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,7 +14,10 @@ export default function InvitePage() {
   const params = useParams({ strict: false });
   const navigate = useNavigate({});
   const token = params.token as string;
-  const { user, isLoaded } = useUser();
+  const user = {
+    primaryEmailAddress: { emailAddress: "kitze@server.kitze.io" },
+  };
+  const isLoaded = true;
 
   const { invite } = useInviteData({ token });
   const acceptInvite = useMutation(api.teams.acceptInvite);

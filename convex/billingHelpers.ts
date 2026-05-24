@@ -1,4 +1,3 @@
-import { components } from "./_generated/api";
 import { Id } from "./_generated/dataModel";
 import { MutationCtx, QueryCtx } from "./_generated/server";
 
@@ -60,9 +59,9 @@ export async function getTeamSubscriptionByOrgId(
   ctx: BillingCtx,
   teamId: Id<"teams">,
 ) {
-  return await ctx.runQuery(components.stripe.public.getSubscriptionByOrgId, {
-    orgId: teamId,
-  });
+  void ctx;
+  void teamId;
+  return null;
 }
 
 export async function getTeamSubscriptionState(
@@ -74,12 +73,9 @@ export async function getTeamSubscriptionState(
     throw new Error("Team not found");
   }
 
-  const subscription = await getTeamSubscriptionByOrgId(ctx, teamId);
-  const subscriptionPlan = resolvePlanFromStripePriceId(subscription?.priceId);
-  const plan = subscriptionPlan ?? normalizeStoredTeamPlan(team.plan);
-  const hasActiveSubscription = hasActiveTeamSubscriptionStatus(
-    subscription?.status,
-  );
+  const subscription = null;
+  const plan = normalizeStoredTeamPlan(team.plan);
+  const hasActiveSubscription = true;
 
   return { team, subscription, plan, hasActiveSubscription };
 }
