@@ -5,16 +5,6 @@ type ClerkIdentity = NonNullable<
   Awaited<ReturnType<QueryCtx["auth"]["getUserIdentity"]>>
 >;
 
-function selfHostedIdentity(): ClerkIdentity {
-  return {
-    subject: "selfhost-user",
-    issuer: "selfhost",
-    name: "Kitze",
-    email: "kitze@server.kitze.io",
-    pictureUrl: undefined,
-  } as ClerkIdentity;
-}
-
 function hasString(value: unknown): value is string {
   return typeof value === "string" && value.length > 0;
 }
@@ -48,7 +38,7 @@ export function identityAvatarUrl(identity: ClerkIdentity): string | undefined {
 
 export async function getUser(ctx: QueryCtx | MutationCtx) {
   const identity = await ctx.auth.getUserIdentity();
-  return identity ?? selfHostedIdentity();
+  return identity;
 }
 
 export async function requireUser(ctx: QueryCtx | MutationCtx) {
@@ -61,7 +51,7 @@ export async function requireUser(ctx: QueryCtx | MutationCtx) {
 
 export async function getIdentity(ctx: ActionCtx) {
   const identity = await ctx.auth.getUserIdentity();
-  return identity ?? selfHostedIdentity();
+  return identity;
 }
 
 const ROLE_HIERARCHY = {

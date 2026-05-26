@@ -1,8 +1,12 @@
 "use client";
 
 import { ConvexReactClient } from "convex/react";
-import { ConvexProvider } from "convex/react";
+import { ConvexProviderWithAuth } from "convex/react";
 import { ReactNode } from "react";
+import {
+  SelfHostedAuthProvider,
+  useSelfHostedAuthForConvex,
+} from "@/lib/selfHostedAuth";
 
 const convexUrl = import.meta.env.VITE_CONVEX_URL;
 
@@ -13,7 +17,13 @@ if (!convexUrl) {
 const convex = new ConvexReactClient(convexUrl);
 
 export function ConvexClientProvider({ children }: { children: ReactNode }) {
-  return <ConvexProvider client={convex}>{children}</ConvexProvider>;
+  return (
+    <SelfHostedAuthProvider>
+      <ConvexProviderWithAuth client={convex} useAuth={useSelfHostedAuthForConvex}>
+        {children}
+      </ConvexProviderWithAuth>
+    </SelfHostedAuthProvider>
+  );
 }
 
 export { convex };

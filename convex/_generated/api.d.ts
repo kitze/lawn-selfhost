@@ -15,6 +15,7 @@ import type * as comments from "../comments.js";
 import type * as http from "../http.js";
 import type * as mux from "../mux.js";
 import type * as muxActions from "../muxActions.js";
+import type * as passwordAuth from "../passwordAuth.js";
 import type * as projects from "../projects.js";
 import type * as s3 from "../s3.js";
 import type * as security from "../security.js";
@@ -40,6 +41,7 @@ declare const fullApi: ApiFromModules<{
   http: typeof http;
   mux: typeof mux;
   muxActions: typeof muxActions;
+  passwordAuth: typeof passwordAuth;
   projects: typeof projects;
   s3: typeof s3;
   security: typeof security;

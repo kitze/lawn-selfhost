@@ -15,6 +15,7 @@ import {
 import { UploadProgress } from "@/components/upload/UploadProgress";
 import { useVideoUploadManager } from "./-useVideoUploadManager";
 import { DashboardUploadProvider } from "@/lib/dashboardUploadContext";
+import { useSelfHostedAuth } from "@/lib/selfHostedAuth";
 
 const VIDEO_FILE_EXTENSIONS = /\.(mp4|mov|m4v|webm|avi|mkv)$/i;
 
@@ -32,8 +33,9 @@ function dragEventHasFiles(event: DragEvent) {
 }
 
 export default function DashboardLayout() {
-  const isLoaded = true;
-  const userId = "selfhost-user";
+  const { isLoading, user } = useSelfHostedAuth();
+  const isLoaded = !isLoading;
+  const userId = user?.subject;
   const location = useLocation();
   const { pathname, searchStr } = location;
   const params = useParams({ strict: false });

@@ -13,12 +13,13 @@ import { useVideoPresence } from "@/lib/useVideoPresence";
 import { VideoWatchers } from "@/components/presence/VideoWatchers";
 import { Lock, Video, AlertCircle, MessageSquare, Clock, Download } from "lucide-react";
 import { useShareData } from "./-share.data";
+import { useSelfHostedAuth } from "@/lib/selfHostedAuth";
 
 export default function SharePage() {
   const params = useParams({ strict: false });
   const token = params.token as string;
-  const user = { id: "selfhost-user" };
-  const isUserLoaded = true;
+  const { isLoading: isAuthLoading, user } = useSelfHostedAuth();
+  const isUserLoaded = !isAuthLoading;
 
   const issueAccessGrant = useMutation(api.shareLinks.issueAccessGrant);
   const createComment = useMutation(api.comments.createForShareGrant);

@@ -1,10 +1,11 @@
 import { Link } from "@tanstack/react-router";
-import { Moon, Sun, User } from "lucide-react";
+import { LogOut, Moon, Sun, User } from "lucide-react";
 import { useTheme } from "@/components/theme/ThemeToggle";
 import React from "react";
 import { useConvex } from "convex/react";
 import { useRoutePrewarmIntent } from "@/lib/useRoutePrewarmIntent";
 import { prewarmDashboardIndex } from "../../app/routes/dashboard/-index.data";
+import { useSelfHostedAuth } from "@/lib/selfHostedAuth";
 
 function ThemeToggleButton() {
   const { theme, toggleTheme, mounted } = useTheme();
@@ -41,9 +42,15 @@ export function DashboardHeader({
   paths?: PathSegment[];
 }) {
   const convex = useConvex();
+  const { user, signOut } = useSelfHostedAuth();
   const prewarmHomeIntentHandlers = useRoutePrewarmIntent(() =>
     prewarmDashboardIndex(convex),
   );
+
+  const handleSignOut = () => {
+    signOut();
+    window.location.assign("/sign-in");
+  };
 
   return (
     <header className="flex-shrink-0 border-b-2 border-[#1a1a1a] bg-[#f0f0e8] grid grid-cols-[1fr_auto] sm:grid-cols-[auto_1fr_auto] items-center px-4 sm:px-6">
@@ -86,11 +93,20 @@ export function DashboardHeader({
         <ThemeToggleButton />
         <div
           className="w-8 h-8 border-2 border-[#1a1a1a] flex items-center justify-center bg-[#e8e8e0]"
-          title="Kitze"
-          aria-label="Kitze"
+          title={user?.name ?? "Account"}
+          aria-label={user?.name ?? "Account"}
         >
           <User className="h-4 w-4 text-[#1a1a1a]" />
         </div>
+        <button
+          type="button"
+          onClick={handleSignOut}
+          className="w-8 h-8 flex items-center justify-center text-[#888] hover:text-[#1a1a1a] hover:bg-[#e8e8e0] transition-colors"
+          title="Sign out"
+          aria-label="Sign out"
+        >
+          <LogOut className="h-4 w-4" />
+        </button>
       </div>
 
       {/* Children — second row on mobile, middle column on desktop */}

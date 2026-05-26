@@ -10,12 +10,13 @@ import { triggerDownload } from "@/lib/download";
 import { formatDuration, formatTimestamp, formatRelativeTime } from "@/lib/utils";
 import { AlertCircle, MessageSquare, Clock, Download, X } from "lucide-react";
 import { useWatchData } from "./-watch.data";
+import { useSelfHostedAuth } from "@/lib/selfHostedAuth";
 
 export default function WatchPage() {
   const params = useParams({ strict: false });
   const publicId = params.publicId as string;
-  const user = { id: "selfhost-user" };
-  const isUserLoaded = true;
+  const { isLoading: isAuthLoading, user } = useSelfHostedAuth();
+  const isUserLoaded = !isAuthLoading;
 
   const createComment = useMutation(api.comments.createForPublic);
   const getPlaybackSession = useAction(api.videoActions.getPublicPlaybackSession);
